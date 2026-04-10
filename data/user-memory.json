@@ -1,0 +1,15 @@
+{
+  "users": {
+    "demo-user": {
+      "userId": "demo-user",
+      "vibeScores": {
+        "architecture": 2
+      },
+      "dislikedPlaces": [
+        "武康路街区"
+      ],
+      "updatedAt": "2026-04-10T07:46:57.300Z",
+      "preferredMobility": "low"
+    }
+  }
+}

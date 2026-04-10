@@ -1,0 +1,83 @@
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+    - when: never
+
+stages:
+  - quality
+  - build
+  - deploy
+
+default:
+  image: node:20-alpine
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .npm/
+  variables:
+    npm_config_cache: "$CI_PROJECT_DIR/.npm"
+    NEXT_TELEMETRY_DISABLED: "1"
+  before_script:
+    - npm ci
+
+lint:
+  stage: quality
+  script:
+    - npm run lint
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+test:
+  stage: quality
+  variables:
+    NODE_ENV: "test"
+  script:
+    - npm run test
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+build:
+  stage: build
+  script:
+    - npm run build
+  needs:
+    - lint
+    - test
+  artifacts:
+    expire_in: 7 days
+    paths:
+      - .next/
+      - package.json
+      - package-lock.json
+      - documents/week4_release_checklist.md
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+deploy_vercel:
+  stage: deploy
+  needs:
+    - build
+  environment:
+    name: production
+  script:
+    - |
+      if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+        echo "Missing VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID, skip deploy."
+        exit 0
+      fi
+    - npx vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+    - npx vercel build --prod --token="$VERCEL_TOKEN"
+    - npx vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+    - if: $CI_COMMIT_TAG
+      when: on_success

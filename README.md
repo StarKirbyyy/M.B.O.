@@ -2,6 +2,64 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+### Environment Variables
+
+Create `.env.local` in the project root:
+
+```bash
+AMAP_WEB_KEY=your_amap_web_service_key
+NEXT_PUBLIC_AMAP_JS_KEY=your_amap_js_key
+POI_PROVIDER=amap
+POI_TOOL_TIMEOUT_MS=4500
+WEATHER_TOOL_TIMEOUT_MS=4500
+SILICONFLOW_API_KEY=sk-xxxx
+SILICONFLOW_BASE_URL=https://api.siliconflow.cn/v1
+SILICONFLOW_MODEL=Qwen/Qwen2-7B-Instruct
+SILICONFLOW_TIMEOUT_MS=12000
+AGENT_OFFLINE_ONLY=false
+```
+
+- `POI_PROVIDER` supports `amap` / `osm` (defaults to `amap` when `AMAP_WEB_KEY` exists).
+- If AMap request fails, POI lookup falls back to OSM, then to mock fallback.
+- If SiliconFlow variables are missing or model call fails, planner falls back to rule-based planning.
+- `NEXT_PUBLIC_AMAP_JS_KEY` is used for interactive dynamic map rendering on frontend.
+- `AGENT_OFFLINE_ONLY=true` forces offline-safe mode (no live weather/POI/model calls), useful for demo stability.
+
+### Streaming Progress API
+
+- `POST /api/agent/plan`: returns final plan JSON (`{ input, userId }`).
+- `POST /api/agent/plan/stream`: returns `text/event-stream` (`{ input, userId }`) and continuously emits:
+  - `stage`: structured progress stage
+  - `model_chunk`: streaming model output chunk
+  - `final`: final result payload
+
+### Memory API (Week 3)
+
+- `POST /api/agent/feedback`: writes long-term user preference memory.
+  - request body example:
+    - `userId`: `"demo-user"`
+    - `likedVibes`: `["art"]`
+    - `dislikedPlaces`: `["武康路街区"]`
+    - `preferredMobility`: `"low"`
+- Memory file is stored at `data/user-memory.json`.
+
+### Test Commands (Week 4)
+
+- `npm run test`: run unit and key-flow tests (Vitest).
+- `npm run test:watch`: watch mode.
+
+### GitLab CI/CD (Week 4)
+
+- CI/CD guide: `documents/gitlab_cicd_guide.md`
+- Pipeline file: `.gitlab-ci.yml`
+- Default quality gate in GitLab: `lint -> test -> build`
+- Optional deploy job: `deploy_vercel` (requires `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`)
+
+### AMap Static Marker API
+
+- `GET /api/map/static?points=1,121.47,31.23;2,121.45,31.20`
+- Server-side proxy for AMap static map image rendering (does not expose `AMAP_WEB_KEY` on frontend).
+
 First, run the development server:
 
 ```bash
