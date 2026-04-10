@@ -5,12 +5,12 @@
 本指南用于将当前项目接入 GitLab CI/CD，实现：
 
 1. 合并请求与主干代码自动质量门禁（`lint`、`test`、`build`）。
-2. 主干或 Tag 的可控发布（支持 GitLab Runner + Vercel 部署）。
+2. 通过 GitLab Runner 调用 Vercel CLI 完成 Preview/Production 部署。
 3. 与现有 Week 4 交付标准保持一致（见 `documents/week4_release_checklist.md`）。
 
 当前仓库已提供可直接使用的流水线文件：`.gitlab-ci.yml`。
 
-## 2. 推荐方案
+## 2. 推荐方案（私服 GitLab）
 
 ### 2.1 Runner 选择建议
 
@@ -20,8 +20,8 @@
 ### 2.2 分支与触发建议
 
 1. `merge_request`：强制运行 `lint + test + build`。
-2. `main`：自动运行 CI，部署 job 设为手动触发（降低误发布风险）。
-3. `tag`：自动触发生产部署（可用于正式版本发布）。
+2. 非 `main` 分支：`lint + test + build` 后自动执行 Preview 部署。
+3. `main` 分支：`lint + test + build` 后手动触发生产部署（降低误发布风险）。
 
 ## 3. 一次性配置步骤
 
@@ -32,24 +32,25 @@
 3. 如果使用共享 Runner，确认 Shared Runners 已启用。
 4. 如果使用自建 Runner，按 GitLab 页面提示注册 Runner，并为 Runner 打上标签（例如 `docker`）。
 
-### 3.2 配置 CI/CD Variables（必做）
+### 3.2 配置 GitLab CI/CD Variables（必做）
 
 进入 `Settings -> CI/CD -> Variables`，添加以下变量：
 
-1. `VERCEL_TOKEN`（Protected + Masked）
-2. `VERCEL_ORG_ID`（Protected）
-3. `VERCEL_PROJECT_ID`（Protected）
+1. `VERCEL_TOKEN`（Masked，建议 Protected）
+2. `VERCEL_ORG_ID`（建议 Protected）
+3. `VERCEL_PROJECT_ID`（建议 Protected）
 
 说明：
 
-1. 若不配置以上 3 个变量，部署 job 会自动跳过，但 CI 质量门禁仍然正常运行。
-2. 应用运行时变量（如 `SILICONFLOW_API_KEY`、`AMAP_WEB_KEY`）按部署平台需求配置在目标环境中，不建议明文写入仓库。
+1. 私服 GitLab 无法使用原生 Git 集成时，此方案最稳定。
+2. 若变量缺失，部署 job 会输出 skip 信息，但质量门禁仍可运行。
 
 ### 3.3 推送并验证
 
 1. 将 `.gitlab-ci.yml` 推送到仓库。
 2. 提交一个 MR，确认 `lint/test/build` 全绿。
-3. 合并到 `main` 后，在 `deploy_vercel` job 手动点击执行，验证生产部署链路。
+3. 在任意非 `main` 分支推送一次，确认 `deploy_preview` 成功。
+4. 合并到 `main` 后手动触发 `deploy_production`，确认生产部署成功。
 
 ## 4. 当前流水线说明（`.gitlab-ci.yml`）
 
@@ -64,7 +65,8 @@
 1. `lint`：执行 `npm run lint`。
 2. `test`：执行 `npm run test`（设置 `NODE_ENV=test`）。
 3. `build`：执行 `npm run build`，并产出构建工件。
-4. `deploy_vercel`：在 `main`（手动）或 `tag`（自动）触发，执行 Vercel CLI 部署。
+4. `deploy_preview`：非 `main` 分支自动部署 Preview。
+5. `deploy_production`：`main` 分支手动触发生产部署，Tag 自动部署。
 
 ### 4.3 性能与稳定性设置
 
@@ -74,8 +76,8 @@
 
 ## 5. 可选增强（建议迭代）
 
-1. 增加 `preview` 环境：MR 自动部署临时预览 URL。
-2. 引入 `environment` 审批策略：生产部署需 Maintainer 审批。
+1. 在 Vercel 中启用 Deployment Protection（生产环境审批保护）。
+2. 在 GitLab 中为 `main` 分支启用保护规则并限制手动部署权限。
 3. 增加 E2E smoke test（部署后探活接口）：
    - `POST /api/agent/plan`
    - `POST /api/agent/plan/stream`
@@ -90,10 +92,11 @@
 1. Runner 未启用，或没有匹配当前 job 的执行器/标签。
 2. 共享 Runner 配额不足，需等待或切换自建 Runner。
 
-### 6.2 部署被跳过
+### 6.2 部署被跳过或失败
 
-1. 未配置 `VERCEL_TOKEN`/`VERCEL_ORG_ID`/`VERCEL_PROJECT_ID`。
-2. 这是预期保护行为，不影响 CI 质量门禁。
+1. `VERCEL_TOKEN`/`VERCEL_ORG_ID`/`VERCEL_PROJECT_ID` 未配置或作用域不匹配。
+2. Runner 所在网络无法访问 `https://api.vercel.com`。
+3. `VERCEL_TOKEN` 的 scope 未覆盖目标 Team 或项目。
 
 ### 6.3 本地通过，CI 失败
 
@@ -105,5 +108,5 @@
 
 1. GitLab Runner 可执行 pipeline。
 2. MR 必须通过 `lint/test/build` 才可合并。
-3. `main` 分支部署具备人工确认或审批。
-4. 密钥均在 GitLab Variables 中管理，仓库不存放真实密钥。
+3. Preview 与 Production 部署都能从 GitLab Pipeline 成功触发。
+4. 部署密钥仅存放在 GitLab Variables（或外部密钥管理）中，仓库不存放真实密钥。

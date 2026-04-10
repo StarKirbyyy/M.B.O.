@@ -53,7 +53,7 @@ AGENT_OFFLINE_ONLY=false
 - CI/CD guide: `documents/gitlab_cicd_guide.md`
 - Pipeline file: `.gitlab-ci.yml`
 - Default quality gate in GitLab: `lint -> test -> build`
-- Optional deploy job: `deploy_vercel` (requires `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`)
+- Deployment path for self-hosted GitLab: GitLab Runner + Vercel CLI (`deploy_preview` / `deploy_production`)
 
 ### AMap Static Marker API
 
