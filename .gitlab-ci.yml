@@ -10,15 +10,16 @@ stages:
   - build
   - deploy
 
+variables:
+  npm_config_cache: "$CI_PROJECT_DIR/.npm"
+  NEXT_TELEMETRY_DISABLED: "1"
+
 default:
   image: node:20-alpine
   cache:
     key: ${CI_COMMIT_REF_SLUG}
     paths:
       - .npm/
-  variables:
-    npm_config_cache: "$CI_PROJECT_DIR/.npm"
-    NEXT_TELEMETRY_DISABLED: "1"
   before_script:
     - npm ci
 
