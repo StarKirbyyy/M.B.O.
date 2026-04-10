@@ -20,8 +20,8 @@
 ### 2.2 分支与触发建议
 
 1. `merge_request`：强制运行 `lint + test + build`。
-2. 非 `main` 分支：`lint + test + build` 后自动执行 Preview 部署。
-3. `main` 分支：`lint + test + build` 后手动触发生产部署（降低误发布风险）。
+2. 非 `main/master` 分支：`lint + test + build` 后自动执行 Preview 部署。
+3. `main` 或 `master` 分支：`lint + test + build` 后手动触发生产部署（降低误发布风险）。
 
 ## 3. 一次性配置步骤
 
@@ -49,8 +49,8 @@
 
 1. 将 `.gitlab-ci.yml` 推送到仓库。
 2. 提交一个 MR，确认 `lint/test/build` 全绿。
-3. 在任意非 `main` 分支推送一次，确认 `deploy_preview` 成功。
-4. 合并到 `main` 后手动触发 `deploy_production`，确认生产部署成功。
+3. 在任意非 `main/master` 分支推送一次，确认 `deploy_preview` 成功。
+4. 合并到 `main` 或 `master` 后手动触发 `deploy_production`，确认生产部署成功。
 
 ## 4. 当前流水线说明（`.gitlab-ci.yml`）
 
@@ -65,8 +65,8 @@
 1. `lint`：执行 `npm run lint`。
 2. `test`：执行 `npm run test`（设置 `NODE_ENV=test`）。
 3. `build`：执行 `npm run build`，并产出构建工件。
-4. `deploy_preview`：非 `main` 分支自动部署 Preview。
-5. `deploy_production`：`main` 分支手动触发生产部署，Tag 自动部署。
+4. `deploy_preview`：非 `main/master` 分支自动部署 Preview。
+5. `deploy_production`：`main/master` 分支手动触发生产部署，Tag 自动部署。
 
 ### 4.3 性能与稳定性设置
 
@@ -77,7 +77,7 @@
 ## 5. 可选增强（建议迭代）
 
 1. 在 Vercel 中启用 Deployment Protection（生产环境审批保护）。
-2. 在 GitLab 中为 `main` 分支启用保护规则并限制手动部署权限。
+2. 在 GitLab 中为 `main/master` 分支启用保护规则并限制手动部署权限。
 3. 增加 E2E smoke test（部署后探活接口）：
    - `POST /api/agent/plan`
    - `POST /api/agent/plan/stream`
