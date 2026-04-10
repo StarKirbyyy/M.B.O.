@@ -67,14 +67,27 @@ deploy_preview:
   needs:
     - build
   script:
+    - set -eu
     - |
       if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
-        echo "Missing VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID, skip preview deploy."
-        exit 0
+        echo "ERROR: Missing VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID for preview deploy."
+        echo "Tip: check GitLab Variables scope (Protected) and branch protection."
+        exit 1
       fi
+    - echo "VERCEL_ORG_ID=${VERCEL_ORG_ID}"
+    - echo "VERCEL_PROJECT_ID=${VERCEL_PROJECT_ID}"
+    - npx vercel --version
     - npx vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
-    - npx vercel build --token="$VERCEL_TOKEN"
-    - npx vercel deploy --prebuilt --token="$VERCEL_TOKEN"
+    - npx vercel build --yes --token="$VERCEL_TOKEN"
+    - |
+      DEPLOY_OUTPUT="$(npx vercel deploy --prebuilt --yes --token="$VERCEL_TOKEN")"
+      echo "$DEPLOY_OUTPUT"
+      DEPLOY_URL="$(echo "$DEPLOY_OUTPUT" | grep -Eo 'https://[^ ]+\\.vercel\\.app' | tail -n 1 || true)"
+      if [ -z "$DEPLOY_URL" ]; then
+        echo "ERROR: Cannot parse deployment URL from Vercel output."
+        exit 1
+      fi
+      echo "Preview Deployment URL: $DEPLOY_URL"
   rules:
     - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != "main" && $CI_COMMIT_BRANCH != "master"
       when: on_success
@@ -86,14 +99,27 @@ deploy_production:
   environment:
     name: production
   script:
+    - set -eu
     - |
       if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
-        echo "Missing VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID, skip production deploy."
-        exit 0
+        echo "ERROR: Missing VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID for production deploy."
+        echo "Tip: check GitLab Variables scope (Protected) and branch protection."
+        exit 1
       fi
+    - echo "VERCEL_ORG_ID=${VERCEL_ORG_ID}"
+    - echo "VERCEL_PROJECT_ID=${VERCEL_PROJECT_ID}"
+    - npx vercel --version
     - npx vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-    - npx vercel build --prod --token="$VERCEL_TOKEN"
-    - npx vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+    - npx vercel build --prod --yes --token="$VERCEL_TOKEN"
+    - |
+      DEPLOY_OUTPUT="$(npx vercel deploy --prebuilt --prod --yes --token="$VERCEL_TOKEN")"
+      echo "$DEPLOY_OUTPUT"
+      DEPLOY_URL="$(echo "$DEPLOY_OUTPUT" | grep -Eo 'https://[^ ]+\\.vercel\\.app' | tail -n 1 || true)"
+      if [ -z "$DEPLOY_URL" ]; then
+        echo "ERROR: Cannot parse deployment URL from Vercel output."
+        exit 1
+      fi
+      echo "Production Deployment URL: $DEPLOY_URL"
   rules:
     - if: $CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "master"
       when: manual
