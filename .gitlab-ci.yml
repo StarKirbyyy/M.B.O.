@@ -82,7 +82,13 @@ deploy_preview:
     - |
       DEPLOY_OUTPUT="$(npx vercel deploy --prebuilt --yes --token="$VERCEL_TOKEN")"
       echo "$DEPLOY_OUTPUT"
-      DEPLOY_URL="$(echo "$DEPLOY_OUTPUT" | grep -Eo 'https://[^ ]+\\.vercel\\.app' | tail -n 1 || true)"
+      DEPLOY_URL="$(echo "$DEPLOY_OUTPUT" | tr -d '\r' | tail -n 1)"
+      case "$DEPLOY_URL" in
+        https://*) ;;
+        *)
+          DEPLOY_URL="$(echo "$DEPLOY_OUTPUT" | tr -d '\r' | grep -Eo 'https://[^[:space:]]+' | tail -n 1 || true)"
+          ;;
+      esac
       if [ -z "$DEPLOY_URL" ]; then
         echo "ERROR: Cannot parse deployment URL from Vercel output."
         exit 1
@@ -114,7 +120,13 @@ deploy_production:
     - |
       DEPLOY_OUTPUT="$(npx vercel deploy --prebuilt --prod --yes --token="$VERCEL_TOKEN")"
       echo "$DEPLOY_OUTPUT"
-      DEPLOY_URL="$(echo "$DEPLOY_OUTPUT" | grep -Eo 'https://[^ ]+\\.vercel\\.app' | tail -n 1 || true)"
+      DEPLOY_URL="$(echo "$DEPLOY_OUTPUT" | tr -d '\r' | tail -n 1)"
+      case "$DEPLOY_URL" in
+        https://*) ;;
+        *)
+          DEPLOY_URL="$(echo "$DEPLOY_OUTPUT" | tr -d '\r' | grep -Eo 'https://[^[:space:]]+' | tail -n 1 || true)"
+          ;;
+      esac
       if [ -z "$DEPLOY_URL" ]; then
         echo "ERROR: Cannot parse deployment URL from Vercel output."
         exit 1
