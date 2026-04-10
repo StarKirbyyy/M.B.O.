@@ -69,7 +69,7 @@ deploy_preview:
   script:
     - set -eu
     - |
-      if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+      if [ -z "${VERCEL_TOKEN:-}" ] || [ -z "${VERCEL_ORG_ID:-}" ] || [ -z "${VERCEL_PROJECT_ID:-}" ]; then
         echo "ERROR: Missing VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID for preview deploy."
         echo "Tip: check GitLab Variables scope (Protected) and branch protection."
         exit 1
@@ -78,7 +78,7 @@ deploy_preview:
     - echo "VERCEL_PROJECT_ID=${VERCEL_PROJECT_ID}"
     - npx vercel --version
     - npx vercel pull --yes --environment=preview --token="$VERCEL_TOKEN"
-    - npx vercel build --yes --token="$VERCEL_TOKEN"
+    - npx vercel build --token="$VERCEL_TOKEN"
     - |
       DEPLOY_OUTPUT="$(npx vercel deploy --prebuilt --yes --token="$VERCEL_TOKEN")"
       echo "$DEPLOY_OUTPUT"
@@ -101,7 +101,7 @@ deploy_production:
   script:
     - set -eu
     - |
-      if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+      if [ -z "${VERCEL_TOKEN:-}" ] || [ -z "${VERCEL_ORG_ID:-}" ] || [ -z "${VERCEL_PROJECT_ID:-}" ]; then
         echo "ERROR: Missing VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID for production deploy."
         echo "Tip: check GitLab Variables scope (Protected) and branch protection."
         exit 1
@@ -110,7 +110,7 @@ deploy_production:
     - echo "VERCEL_PROJECT_ID=${VERCEL_PROJECT_ID}"
     - npx vercel --version
     - npx vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
-    - npx vercel build --prod --yes --token="$VERCEL_TOKEN"
+    - npx vercel build --prod --token="$VERCEL_TOKEN"
     - |
       DEPLOY_OUTPUT="$(npx vercel deploy --prebuilt --prod --yes --token="$VERCEL_TOKEN")"
       echo "$DEPLOY_OUTPUT"
