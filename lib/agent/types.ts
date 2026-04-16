@@ -33,7 +33,16 @@ export interface PlanStep {
 }
 
 export interface AgentEvent {
-  stage: "INPUT" | "CLARIFY" | "MEMORY_READ" | "TOOL_WEATHER" | "MODEL_PLAN" | "PLAN" | "TOOL_POI" | "REPLAN";
+  stage:
+    | "INPUT"
+    | "MODEL_CLARIFY"
+    | "CLARIFY"
+    | "MEMORY_READ"
+    | "TOOL_WEATHER"
+    | "MODEL_PLAN"
+    | "PLAN"
+    | "TOOL_POI"
+    | "REPLAN";
   detail: string;
   payload?: Record<string, unknown>;
 }

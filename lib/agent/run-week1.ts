@@ -1,3 +1,4 @@
+import { clarifyGoalWithAi } from "@/lib/agent/ai-clarifier";
 import { clarifyGoal } from "@/lib/agent/clarifier";
 import { generatePlanWithSiliconFlowStreaming, isSiliconFlowConfigured } from "@/lib/agent/llm-plan";
 import { getTopVibes, readUserMemory } from "@/lib/agent/memory";
@@ -57,7 +58,32 @@ export async function runWeek1Agent(userInput: string, options?: RunOptions): Pr
     payload: { input: userInput },
   });
 
-  const clarified = clarifyGoal(userInput);
+  const fallbackClarified = clarifyGoal(userInput);
+  let clarified = fallbackClarified;
+
+  if (isSiliconFlowConfigured()) {
+    pushStage(
+      "MODEL_CLARIFY",
+      "尝试使用前置 AI 解析器抽取结构化参数（失败会自动回退规则解析）。",
+    );
+
+    const aiResult = await clarifyGoalWithAi({
+      userInput,
+      fallback: fallbackClarified,
+    });
+
+    if (aiResult) {
+      clarified = aiResult.clarified;
+      pushStage("MODEL_CLARIFY", "前置 AI 解析成功，采用结构化参数。", {
+        confidence: aiResult.confidence,
+      });
+    } else {
+      pushStage("MODEL_CLARIFY", "前置 AI 解析失败或置信度不足，回退规则解析。");
+    }
+  } else {
+    pushStage("MODEL_CLARIFY", "未检测到模型配置，直接使用规则解析。");
+  }
+
   pushStage(
     "CLARIFY",
     "完成目标澄清，提取城市、偏好、体力与缺失约束。",
