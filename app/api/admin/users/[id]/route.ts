@@ -1,4 +1,4 @@
-import { deleteUser, findUserById, updateUser } from "@/lib/auth/repository";
+import { deleteUser, findUserById, toSafeUser, updateUser } from "@/lib/auth/repository";
 import { hashPassword } from "@/lib/auth/password";
 import { readAuthPayload } from "@/lib/auth/request";
 
@@ -25,8 +25,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   if (!user) {
     return Response.json({ error: "user not found" }, { status: 404 });
   }
-  const { passwordHash: _passwordHash, ...safeUser } = user;
-  return Response.json({ user: safeUser });
+  return Response.json({ user: toSafeUser(user) });
 }
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {

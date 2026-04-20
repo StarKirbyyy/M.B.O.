@@ -1,5 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 
 import type { MobilityLevel } from "@/lib/agent/types";
 
@@ -22,11 +22,15 @@ export interface MemoryFeedbackInput {
   preferredMobility?: MobilityLevel;
 }
 
-const DEFAULT_MEMORY_PATH = join(/*turbopackIgnore: true*/ process.cwd(), "data", "user-memory.json");
+const DEFAULT_MEMORY_PATH = join(process.cwd(), "data", "user-memory.json");
+const TEST_MEMORY_ROOT = join(process.cwd(), ".tmp", "mbo-memory");
 
 function getMemoryPath(): string {
   if (process.env.NODE_ENV === "test" && process.env.USER_MEMORY_PATH?.trim()) {
-    return process.env.USER_MEMORY_PATH.trim();
+    const rawPath = process.env.USER_MEMORY_PATH.trim();
+    const scope = basename(dirname(rawPath)) || "default";
+    const file = basename(rawPath) || "memory.json";
+    return join(TEST_MEMORY_ROOT, `${scope}-${file}`);
   }
 
   return DEFAULT_MEMORY_PATH;
