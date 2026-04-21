@@ -1,6 +1,8 @@
 import { createUser, findUserByIdentifier, toSafeUser } from "@/lib/auth/repository";
+import { readClientIp, readUserAgent } from "@/lib/auth/request";
 import { hashPassword } from "@/lib/auth/password";
-import { issueAuthToken } from "@/lib/auth/token";
+import { issueAuthToken, verifyAuthToken } from "@/lib/auth/token";
+import { createUserSession } from "@/lib/user/repository";
 
 interface RegisterBody {
   username?: string;
@@ -64,6 +66,16 @@ export async function POST(request: Request) {
       role: created.role,
       email: created.email,
     });
+    const payload = verifyAuthToken(token);
+    if (payload) {
+      await createUserSession({
+        userId: created.id,
+        token,
+        expiresAt: new Date(payload.exp * 1000).toISOString(),
+        userAgent: readUserAgent(request),
+        ipAddress: readClientIp(request),
+      });
+    }
 
     return Response.json(
       {

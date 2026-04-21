@@ -1,6 +1,8 @@
 import { findUserByIdentifier, toSafeUser, updateLastLogin } from "@/lib/auth/repository";
+import { readClientIp, readUserAgent } from "@/lib/auth/request";
 import { verifyPassword } from "@/lib/auth/password";
-import { issueAuthToken } from "@/lib/auth/token";
+import { issueAuthToken, verifyAuthToken } from "@/lib/auth/token";
+import { createUserSession } from "@/lib/user/repository";
 
 interface LoginBody {
   identifier?: string;
@@ -38,6 +40,16 @@ export async function POST(request: Request) {
       role: user.role,
       email: user.email,
     });
+    const payload = verifyAuthToken(token);
+    if (payload) {
+      await createUserSession({
+        userId: user.id,
+        token,
+        expiresAt: new Date(payload.exp * 1000).toISOString(),
+        userAgent: readUserAgent(request),
+        ipAddress: readClientIp(request),
+      });
+    }
 
     return Response.json({
       user: toSafeUser(user),

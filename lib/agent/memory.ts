@@ -126,3 +126,15 @@ export async function writeUserFeedback(userId: string, feedback: MemoryFeedback
   await writeStore(store);
   return next;
 }
+
+export async function clearUserMemory(userId: string): Promise<boolean> {
+  const normalized = userId.trim() || "demo-user";
+  const store = await readStore();
+  if (!store.users[normalized]) {
+    return false;
+  }
+
+  delete store.users[normalized];
+  await writeStore(store);
+  return true;
+}

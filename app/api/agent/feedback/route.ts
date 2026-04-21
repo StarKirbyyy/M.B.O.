@@ -1,5 +1,7 @@
 import { writeUserFeedback } from "@/lib/agent/memory";
 import type { MobilityLevel } from "@/lib/agent/types";
+import { readAuthPayload } from "@/lib/auth/request";
+import { createUserFeedbackRecord, updateUserProfile } from "@/lib/user/repository";
 
 interface FeedbackRequestBody {
   userId?: string;
@@ -19,15 +21,43 @@ function normalizeArray(input: unknown): string[] {
 
 export async function POST(request: Request) {
   try {
+    const payload = readAuthPayload(request);
     const body = (await request.json()) as FeedbackRequestBody;
-    const userId = body.userId?.trim() || "demo-user";
+    const userId = payload?.sub ?? body.userId?.trim() ?? "demo-user";
+    const likedVibes = normalizeArray(body.likedVibes);
+    const dislikedVibes = normalizeArray(body.dislikedVibes);
+    const dislikedPlaces = normalizeArray(body.dislikedPlaces);
 
     const updated = await writeUserFeedback(userId, {
-      likedVibes: normalizeArray(body.likedVibes),
-      dislikedVibes: normalizeArray(body.dislikedVibes),
-      dislikedPlaces: normalizeArray(body.dislikedPlaces),
+      likedVibes,
+      dislikedVibes,
+      dislikedPlaces,
       preferredMobility: body.preferredMobility,
     });
+    if (payload) {
+      try {
+        await createUserFeedbackRecord({
+          userId: payload.sub,
+          likedVibes,
+          dislikedVibes,
+          dislikedPlaces,
+          preferredMobility: body.preferredMobility,
+          rawJson: {
+            likedVibes,
+            dislikedVibes,
+            dislikedPlaces,
+            preferredMobility: body.preferredMobility ?? null,
+          },
+        });
+        if (body.preferredMobility) {
+          await updateUserProfile(payload.sub, {
+            preferredMobility: body.preferredMobility,
+          });
+        }
+      } catch {
+        // Keep core feedback endpoint available even if DB persistence fails.
+      }
+    }
 
     return Response.json({
       ok: true,

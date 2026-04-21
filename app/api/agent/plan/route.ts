@@ -1,4 +1,6 @@
+import { readAuthPayload } from "@/lib/auth/request";
 import { runWeek1Agent } from "@/lib/agent/run-week1";
+import { createPlanHistory } from "@/lib/user/repository";
 
 interface PlanRequestBody {
   input?: string;
@@ -7,9 +9,10 @@ interface PlanRequestBody {
 
 export async function POST(request: Request) {
   try {
+    const payload = readAuthPayload(request);
     const body = (await request.json()) as PlanRequestBody;
     const input = body.input?.trim();
-    const userId = body.userId?.trim() || "demo-user";
+    const userId = payload?.sub ?? body.userId?.trim() ?? "demo-user";
 
     if (!input) {
       return Response.json(
@@ -22,6 +25,19 @@ export async function POST(request: Request) {
     }
 
     const result = await runWeek1Agent(input, { userId });
+    if (payload) {
+      try {
+        await createPlanHistory({
+          userId: payload.sub,
+          prompt: input,
+          plannerSource: result.plannerSource,
+          summary: result.summary,
+          result,
+        });
+      } catch {
+        // Keep planning response available even if persistence fails.
+      }
+    }
     return Response.json(result);
   } catch {
     return Response.json(
