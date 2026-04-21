@@ -32,7 +32,6 @@ interface UpdateUserInput {
 }
 
 declare global {
-  // eslint-disable-next-line no-var
   var __mboAuthSchemaInitPromise: Promise<void> | undefined;
 }
 
@@ -51,8 +50,16 @@ function mapRow(row: UserRow): AuthUserWithPassword {
 }
 
 function toPublicUser(user: AuthUserWithPassword): AuthUser {
-  const { passwordHash: _passwordHash, ...rest } = user;
-  return rest;
+  return {
+    id: user.id,
+    username: user.username,
+    email: user.email,
+    role: user.role,
+    status: user.status,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    lastLoginAt: user.lastLoginAt,
+  };
 }
 
 async function bootstrapAdminIfNeeded(): Promise<void> {
