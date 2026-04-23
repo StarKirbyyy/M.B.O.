@@ -1,15 +1,21 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import AmapDynamicMap from "@/app/components/amap-dynamic-map";
 import type { MobilityLevel, PlanResult } from "@/lib/agent/types";
 
 const DEFAULT_INPUT = "我想在上海度过一个有艺术感的下午，但不想太累";
 
-export default function Week1Demo() {
-  const [userId, setUserId] = useState("demo-user");
+interface Week1DemoProps {
+  authToken?: string | null;
+  currentUserId?: string | null;
+  onRequireAuth?: () => void;
+}
+
+export default function Week1Demo({ authToken = null, currentUserId = null, onRequireAuth }: Week1DemoProps) {
+  const [userId, setUserId] = useState(currentUserId ?? "demo-user");
   const [input, setInput] = useState(DEFAULT_INPUT);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,6 +29,12 @@ export default function Week1Demo() {
   const [dislikedPlacesInput, setDislikedPlacesInput] = useState("");
   const [preferredMobility, setPreferredMobility] = useState<MobilityLevel | "">("");
 
+  useEffect(() => {
+    if (currentUserId) {
+      setUserId(currentUserId);
+    }
+  }, [currentUserId]);
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
@@ -34,15 +46,23 @@ export default function Week1Demo() {
     setFeedbackError(null);
 
     try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (authToken) {
+        headers.Authorization = `Bearer ${authToken}`;
+      }
+
       const response = await fetch("/api/agent/plan/stream", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({ input, userId }),
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          onRequireAuth?.();
+        }
         const message = `请求失败：${response.status}`;
         throw new Error(message);
       }
@@ -168,11 +188,16 @@ export default function Week1Demo() {
         .map((item) => item.trim())
         .filter(Boolean);
 
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (authToken) {
+        headers.Authorization = `Bearer ${authToken}`;
+      }
+
       const response = await fetch("/api/agent/feedback", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           userId,
           likedVibes,
@@ -182,6 +207,9 @@ export default function Week1Demo() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          onRequireAuth?.();
+        }
         throw new Error(`反馈提交失败：${response.status}`);
       }
 
@@ -195,12 +223,21 @@ export default function Week1Demo() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 md:px-8">
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="mbo-console mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 md:px-8">
+      <section className="mbo-hero mbo-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <p className="mbo-kicker">Runtime Feed</p>
         <h2 className="text-lg font-semibold text-slate-900">Week 3 Demo: 可视化 + 长期偏好记忆</h2>
         <p className="mt-2 text-sm text-slate-600">
           当前版本已打通：输入需求 - 目标澄清 - 记忆读取 - 天气与POI工具 - 异常检测与自动重规划 - 反馈写回记忆。
         </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <span className="mbo-chip">
+            <span className="mbo-chip-dot" />
+            stage stream
+          </span>
+          <span className="mbo-chip">memory writeback</span>
+          <span className="mbo-chip">map telemetry</span>
+        </div>
 
         <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
           <label htmlFor="user-id" className="text-sm font-medium text-slate-700">
@@ -210,8 +247,12 @@ export default function Week1Demo() {
             id="user-id"
             value={userId}
             onChange={(event) => setUserId(event.target.value)}
+            disabled={Boolean(currentUserId)}
             className="rounded-xl border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
           />
+          {currentUserId ? (
+            <p className="text-xs text-slate-500">当前已登录，userId 将自动使用当前账号。</p>
+          ) : null}
           <label htmlFor="trip-input" className="text-sm font-medium text-slate-700">
             用户需求输入
           </label>
@@ -245,9 +286,9 @@ export default function Week1Demo() {
       </section>
 
       {loading || progressLogs.length > 0 || modelOutputPreview ? (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <section className="mbo-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <h3 className="text-base font-semibold text-slate-900">实时推理过程（结构化）</h3>
-          <div className="mt-3 max-h-56 space-y-2 overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div className="mbo-terminal mt-3 max-h-56 space-y-2 overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3">
             {progressLogs.length > 0 ? (
               progressLogs.map((log, index) => (
                 <p key={`progress-${index}`} className="text-sm text-slate-700">
@@ -259,7 +300,7 @@ export default function Week1Demo() {
             )}
           </div>
           <h4 className="mt-4 text-sm font-semibold text-slate-900">模型输出流（原始片段）</h4>
-          <pre className="mt-2 max-h-56 overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-6 text-slate-700">
+          <pre className="mbo-terminal mt-2 max-h-56 overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-6 text-slate-700">
             {modelOutputPreview || "等待模型输出..."}
           </pre>
         </section>
@@ -268,7 +309,7 @@ export default function Week1Demo() {
       {result ? (
         <>
           <section className="grid gap-4 md:grid-cols-2">
-            <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <article className="mbo-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h3 className="text-base font-semibold text-slate-900">目标澄清结果</h3>
               <div className="mt-3 space-y-1 text-sm text-slate-700">
                 <p>城市：{result.clarified.city}</p>
@@ -283,7 +324,7 @@ export default function Week1Demo() {
               </div>
             </article>
 
-            <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <article className="mbo-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h3 className="text-base font-semibold text-slate-900">环境感知（Weather Tool）</h3>
               <div className="mt-3 space-y-1 text-sm text-slate-700">
                 <p>天气：{result.weather.condition}</p>
@@ -294,7 +335,7 @@ export default function Week1Demo() {
             </article>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="mbo-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-base font-semibold text-slate-900">用户长期记忆快照</h3>
             <div className="mt-3 space-y-1 text-sm text-slate-700">
               <p>userId：{result.userId}</p>
@@ -307,13 +348,13 @@ export default function Week1Demo() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="mbo-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-base font-semibold text-slate-900">重规划后计划（最终）</h3>
             <p className="mt-2 text-sm text-slate-600">{result.summary}</p>
             <p className="mt-1 text-sm text-slate-600">初始规划来源：{result.plannerSource}</p>
             <div className="mt-4 space-y-3">
               {result.plan.map((step) => (
-                <article key={step.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <article key={step.id} className="mbo-panel rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-slate-900">
                       {step.time} · {step.place}
@@ -330,7 +371,7 @@ export default function Week1Demo() {
           </section>
 
           <section className="grid gap-4 md:grid-cols-2">
-            <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <article className="mbo-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h3 className="text-base font-semibold text-slate-900">初始计划快照</h3>
               <div className="mt-3 space-y-2">
                 {result.initialPlan.map((step) => (
@@ -341,7 +382,7 @@ export default function Week1Demo() {
               </div>
             </article>
 
-            <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <article className="mbo-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
               <h3 className="text-base font-semibold text-slate-900">自我修正记录</h3>
               <div className="mt-3 space-y-2">
                 {result.corrections.length > 0 ? (
@@ -362,11 +403,11 @@ export default function Week1Demo() {
             </article>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="mbo-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-base font-semibold text-slate-900">POI 工具检查结果</h3>
             <div className="mt-3 space-y-2">
               {result.poiChecks.map((check) => (
-                <article key={`poi-${check.stepId}`} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                <article key={`poi-${check.stepId}`} className="mbo-panel rounded-lg border border-slate-200 px-3 py-2 text-sm">
                   <p className="font-medium text-slate-800">
                     {check.stepId} · {check.place} · {check.available ? "可用" : "不可用"}
                   </p>
@@ -379,7 +420,7 @@ export default function Week1Demo() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="mbo-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-base font-semibold text-slate-900">写入反馈（Week 3 记忆更新）</h3>
             <form className="mt-3 grid gap-3 md:grid-cols-2" onSubmit={handleFeedbackSubmit}>
               <label className="flex flex-col gap-1 text-sm text-slate-700">
@@ -427,7 +468,7 @@ export default function Week1Demo() {
             </form>
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="mbo-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-base font-semibold text-slate-900">动态地图标注（高德 JS）</h3>
             {result.mapPoints.length > 0 ? (
               <AmapDynamicMap points={result.mapPoints} />
@@ -436,7 +477,7 @@ export default function Week1Demo() {
             )}
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="mbo-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-base font-semibold text-slate-900">最终地点地图标注（高德静态地图）</h3>
             {result.mapPoints.length > 0 ? (
               <>
@@ -466,11 +507,11 @@ export default function Week1Demo() {
             )}
           </section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <section className="mbo-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <h3 className="text-base font-semibold text-slate-900">状态流转（含 Replan）</h3>
             <div className="mt-3 grid gap-2">
               {result.timeline.map((event, index) => (
-                <article key={`${event.stage}-${index}`} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                <article key={`${event.stage}-${index}`} className="mbo-panel rounded-lg border border-slate-200 px-3 py-2 text-sm">
                   <p className="font-medium text-slate-800">
                     {index + 1}. {event.stage}
                   </p>
