@@ -1,9 +1,34 @@
 import type { Metadata } from "next";
+import { IBM_Plex_Mono, Noto_Sans_SC, Rajdhani } from "next/font/google";
+
 import "./globals.css";
+import { AuthProvider } from "@/app/components/auth-provider";
+import MainNav from "@/app/components/main-nav";
+
+const fontBody = Noto_Sans_SC({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-body",
+  display: "swap",
+});
+
+const fontDisplay = Rajdhani({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+const fontMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: "City Flaneur Agent",
-  description: "Week 1 prototype for a self-correcting city exploration assistant",
+  title: "M.B.O.",
+  description: "M.B.O. frontend",
 };
 
 export default function RootLayout({
@@ -12,8 +37,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="zh-CN" className={`h-full antialiased ${fontBody.variable} ${fontDisplay.variable} ${fontMono.variable}`}>
+      <body className="mbo-industrial min-h-full flex flex-col">
+        <AuthProvider>
+          <MainNav />
+          <div className="mbo-shell">{children}</div>
+        </AuthProvider>
+      </body>
     </html>
   );
 }
