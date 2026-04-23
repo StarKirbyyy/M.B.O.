@@ -46,6 +46,7 @@ function detectCity(input: string): string {
 }
 
 function detectTimeframe(input: string): string {
+  if (input.includes("一整天") || input.includes("整天") || input.includes("全天")) return "full-day";
   if (input.includes("上午")) return "today morning";
   if (input.includes("下午")) return "today afternoon";
   if (input.includes("晚上") || input.includes("夜")) return "today evening";
@@ -63,6 +64,9 @@ function detectVibes(input: string): string[] {
   }
   if (input.includes("建筑") || input.includes("历史") || input.includes("古") || input.includes("人文")) {
     vibes.push("architecture");
+  }
+  if (input.includes("园林") || input.includes("花园") || input.includes("庭院")) {
+    vibes.push("garden");
   }
   if (input.includes("咖啡") || input.includes("休息") || input.includes("放松") || input.includes("chill")) {
     vibes.push("relax");
@@ -132,7 +136,9 @@ function detectConstraints(input: string): string[] {
 function detectMissing(input: string, budget: BudgetLevel): string[] {
   const missing: string[] = [];
 
-  const hasExplicitTime = ["上午", "下午", "晚上", "夜", "明天", "周末"].some((keyword) => input.includes(keyword));
+  const hasExplicitTime = ["一整天", "整天", "全天", "上午", "下午", "晚上", "夜", "明天", "周末"].some((keyword) =>
+    input.includes(keyword),
+  );
   if (!hasExplicitTime) {
     missing.push("timeframe");
   }

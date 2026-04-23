@@ -16,6 +16,22 @@ const CITY_POI: Record<string, PlaceOption[]> = {
     { name: "武康路街区", vibe: "city-walk", indoor: false },
     { name: "徐汇滨江慢行步道", vibe: "city-walk", indoor: false },
   ],
+  苏州: [
+    { name: "拙政园", vibe: "garden", indoor: false },
+    { name: "狮子林", vibe: "garden", indoor: false },
+    { name: "苏州博物馆", vibe: "art", indoor: true },
+    { name: "平江路历史街区", vibe: "architecture", indoor: false },
+    { name: "留园", vibe: "garden", indoor: false },
+    { name: "诚品生活苏州", vibe: "relax", indoor: true },
+  ],
+  杭州: [
+    { name: "浙江省博物馆武林馆区", vibe: "art", indoor: true },
+    { name: "中国丝绸博物馆", vibe: "architecture", indoor: true },
+    { name: "杭州手工艺活态馆", vibe: "relax", indoor: true },
+    { name: "湖滨银泰室内休息区", vibe: "relax", indoor: true },
+    { name: "南宋御街历史街区", vibe: "architecture", indoor: false },
+    { name: "西湖湖滨步道", vibe: "city-walk", indoor: false },
+  ],
   default: [
     { name: "本地独立咖啡馆", vibe: "relax", indoor: true },
     { name: "城市美术馆", vibe: "art", indoor: true },
@@ -29,6 +45,7 @@ export function getCandidates(city: string): PlaceOption[] {
 }
 
 function pickSlot(timeframe: string): [string, string, string] {
+  if (timeframe === "full-day") return ["09:30", "13:30", "16:00"];
   if (timeframe === "today morning") return ["09:30", "11:00", "12:30"];
   if (timeframe === "today evening") return ["17:30", "19:00", "20:30"];
 
@@ -60,7 +77,7 @@ function choosePlace(
     return filtered[0];
   }
 
-  if (sameVibe.length > 0) {
+  if (!preferIndoor && sameVibe.length > 0) {
     return sameVibe[0];
   }
 

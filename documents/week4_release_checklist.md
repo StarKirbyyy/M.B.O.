@@ -20,7 +20,7 @@
 
 ## 3. Demo Script (8-10 min)
 
-1. Show baseline generation for user `demo-user`.
+1. Show baseline generation for user `local-user`.
 2. Submit feedback:
    - liked vibe: `architecture`
    - disliked place: `武康路街区`

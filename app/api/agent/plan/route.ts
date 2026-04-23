@@ -1,5 +1,5 @@
 import { readAuthPayload } from "@/lib/auth/request";
-import { runWeek1Agent } from "@/lib/agent/run-week1";
+import { runAgent } from "@/lib/agent/runtime/run-agent";
 import { createPlanHistory } from "@/lib/user/repository";
 
 interface PlanRequestBody {
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     const payload = readAuthPayload(request);
     const body = (await request.json()) as PlanRequestBody;
     const input = body.input?.trim();
-    const userId = payload?.sub ?? body.userId?.trim() ?? "demo-user";
+    const userId = payload?.sub ?? body.userId?.trim() ?? "local-user";
 
     if (!input) {
       return Response.json(
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const result = await runWeek1Agent(input, { userId });
+    const result = await runAgent(input, { userId });
     if (payload) {
       try {
         await createPlanHistory({

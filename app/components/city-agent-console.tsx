@@ -4,18 +4,43 @@ import Image from "next/image";
 import { useState } from "react";
 
 import AmapDynamicMap from "@/app/components/amap-dynamic-map";
-import type { MobilityLevel, PlanResult } from "@/lib/agent/types";
+import type { AgentRunEvent, MobilityLevel, PlanResult } from "@/lib/agent/types";
 
 const DEFAULT_INPUT = "我想在上海度过一个有艺术感的下午，但不想太累";
 
-export default function Week1Demo() {
-  const [userId, setUserId] = useState("demo-user");
+function describeEvent(event: AgentRunEvent): string {
+  switch (event.type) {
+    case "run_started":
+      return "运行已启动";
+    case "stage_started":
+      return `${event.stage} · ${event.detail}`;
+    case "thought_generated":
+      return `${event.stage} · ${event.summary}`;
+    case "tool_called":
+      return `${event.stage} · 调用 ${event.toolName}`;
+    case "tool_result":
+      return `${event.stage} · ${event.toolName} ${event.success ? "成功" : "失败"}`;
+    case "replan_requested":
+      return `reflect · 请求重规划：${event.reason}`;
+    case "replan_applied":
+      return `reflect · 应用重规划：${event.reason}`;
+    case "run_completed":
+      return "运行完成";
+    case "run_failed":
+      return `运行失败：${event.message}`;
+    default:
+      return "未知事件";
+  }
+}
+
+export default function CityAgentConsole() {
+  const [userId, setUserId] = useState("local-user");
   const [input, setInput] = useState(DEFAULT_INPUT);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [runId, setRunId] = useState<string | null>(null);
   const [result, setResult] = useState<PlanResult | null>(null);
-  const [progressLogs, setProgressLogs] = useState<string[]>([]);
-  const [modelOutputPreview, setModelOutputPreview] = useState("");
+  const [events, setEvents] = useState<AgentRunEvent[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [feedbackError, setFeedbackError] = useState<string | null>(null);
@@ -27,14 +52,14 @@ export default function Week1Demo() {
     event.preventDefault();
     setLoading(true);
     setError(null);
-    setProgressLogs([]);
-    setModelOutputPreview("");
+    setRunId(null);
     setResult(null);
+    setEvents([]);
     setFeedbackMessage(null);
     setFeedbackError(null);
 
     try {
-      const response = await fetch("/api/agent/plan/stream", {
+      const createResponse = await fetch("/api/agent/runs", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -42,112 +67,62 @@ export default function Week1Demo() {
         body: JSON.stringify({ input, userId }),
       });
 
-      if (!response.ok) {
-        const message = `请求失败：${response.status}`;
-        throw new Error(message);
+      if (!createResponse.ok) {
+        throw new Error(`请求失败：${createResponse.status}`);
       }
 
-      if (!response.body) {
-        throw new Error("流式响应为空");
-      }
+      const created = (await createResponse.json()) as { runId: string };
+      setRunId(created.runId);
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = "";
-
-      const appendLog = (text: string) => {
-        setProgressLogs((prev) => [...prev, text]);
+      const source = new EventSource(`/api/agent/runs/${created.runId}/events`);
+      source.addEventListener("run_started", (message) => {
+        const parsed = JSON.parse((message as MessageEvent).data) as AgentRunEvent;
+        setEvents((prev) => [...prev, parsed]);
+      });
+      source.addEventListener("stage_started", (message) => {
+        const parsed = JSON.parse((message as MessageEvent).data) as AgentRunEvent;
+        setEvents((prev) => [...prev, parsed]);
+      });
+      source.addEventListener("thought_generated", (message) => {
+        const parsed = JSON.parse((message as MessageEvent).data) as AgentRunEvent;
+        setEvents((prev) => [...prev, parsed]);
+      });
+      source.addEventListener("tool_called", (message) => {
+        const parsed = JSON.parse((message as MessageEvent).data) as AgentRunEvent;
+        setEvents((prev) => [...prev, parsed]);
+      });
+      source.addEventListener("tool_result", (message) => {
+        const parsed = JSON.parse((message as MessageEvent).data) as AgentRunEvent;
+        setEvents((prev) => [...prev, parsed]);
+      });
+      source.addEventListener("replan_requested", (message) => {
+        const parsed = JSON.parse((message as MessageEvent).data) as AgentRunEvent;
+        setEvents((prev) => [...prev, parsed]);
+      });
+      source.addEventListener("replan_applied", (message) => {
+        const parsed = JSON.parse((message as MessageEvent).data) as AgentRunEvent;
+        setEvents((prev) => [...prev, parsed]);
+      });
+      source.addEventListener("run_completed", (message) => {
+        const parsed = JSON.parse((message as MessageEvent).data) as Extract<AgentRunEvent, { type: "run_completed" }>;
+        setEvents((prev) => [...prev, parsed]);
+        setResult(parsed.result);
+        setLoading(false);
+        source.close();
+      });
+      source.addEventListener("run_failed", (message) => {
+        const parsed = JSON.parse((message as MessageEvent).data) as Extract<AgentRunEvent, { type: "run_failed" }>;
+        setEvents((prev) => [...prev, parsed]);
+        setError(parsed.message);
+        setLoading(false);
+        source.close();
+      });
+      source.onerror = () => {
+        source.close();
       };
-
-      const handleSseBlock = (block: string) => {
-        if (!block.trim()) {
-          return;
-        }
-
-        const lines = block.split("\n");
-        let eventType = "message";
-        const dataLines: string[] = [];
-
-        for (const line of lines) {
-          if (line.startsWith("event:")) {
-            eventType = line.slice("event:".length).trim();
-            continue;
-          }
-          if (line.startsWith("data:")) {
-            dataLines.push(line.slice("data:".length).trimStart());
-          }
-        }
-
-        if (dataLines.length === 0) {
-          return;
-        }
-
-        const payloadText = dataLines.join("\n");
-
-        let parsed: unknown = null;
-        try {
-          parsed = JSON.parse(payloadText);
-        } catch {
-          return;
-        }
-
-        if (eventType === "stage" && parsed && typeof parsed === "object") {
-          const stage = "stage" in parsed ? String(parsed.stage) : "UNKNOWN";
-          const detail = "detail" in parsed ? String(parsed.detail) : "";
-          appendLog(`${stage} · ${detail}`);
-          return;
-        }
-
-        if (eventType === "model_chunk" && parsed && typeof parsed === "object") {
-          const chunk = "chunk" in parsed ? String(parsed.chunk) : "";
-          if (chunk) {
-            setModelOutputPreview((prev) => prev + chunk);
-          }
-          return;
-        }
-
-        if (eventType === "final" && parsed && typeof parsed === "object" && "result" in parsed) {
-          setResult((parsed as { result: PlanResult }).result);
-          appendLog("DONE · 收到最终结果。");
-          return;
-        }
-
-        if (eventType === "error" && parsed && typeof parsed === "object" && "message" in parsed) {
-          const message = String((parsed as { message: unknown }).message);
-          setError(message);
-          appendLog(`ERROR · ${message}`);
-          return;
-        }
-
-        if (eventType === "heartbeat" && parsed && typeof parsed === "object" && "detail" in parsed) {
-          const detail = String((parsed as { detail: unknown }).detail);
-          appendLog(`HEARTBEAT · ${detail}`);
-        }
-      };
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) {
-          break;
-        }
-
-        buffer += decoder.decode(value, { stream: true });
-        const blocks = buffer.split("\n\n");
-        buffer = blocks.pop() ?? "";
-
-        for (const block of blocks) {
-          handleSseBlock(block);
-        }
-      }
-
-      if (buffer.trim()) {
-        handleSseBlock(buffer);
-      }
     } catch (submitError) {
       const message = submitError instanceof Error ? submitError.message : "未知错误";
       setError(message);
-      setResult(null);
-    } finally {
       setLoading(false);
     }
   }
@@ -185,7 +160,7 @@ export default function Week1Demo() {
         throw new Error(`反馈提交失败：${response.status}`);
       }
 
-      setFeedbackMessage("反馈已写入用户记忆。下一次生成会自动使用这些偏好。");
+      setFeedbackMessage("反馈已写入用户记忆。下一次运行会自动读取这些偏好。");
     } catch (feedbackSubmitError) {
       const message = feedbackSubmitError instanceof Error ? feedbackSubmitError.message : "反馈提交失败";
       setFeedbackError(message);
@@ -197,14 +172,14 @@ export default function Week1Demo() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 md:px-8">
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Week 3 Demo: 可视化 + 长期偏好记忆</h2>
+        <h2 className="text-lg font-semibold text-slate-900">City Agent Runtime</h2>
         <p className="mt-2 text-sm text-slate-600">
-          当前版本已打通：输入需求 - 目标澄清 - 记忆读取 - 天气与POI工具 - 异常检测与自动重规划 - 反馈写回记忆。
+          当前页面只消费统一的 run / event 协议，展示阶段流转、工具执行、自我修正与评测预埋结果。
         </p>
 
         <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3">
           <label htmlFor="user-id" className="text-sm font-medium text-slate-700">
-            用户ID（用于长期记忆）
+            用户 ID
           </label>
           <input
             id="user-id"
@@ -227,7 +202,7 @@ export default function Week1Demo() {
               disabled={loading}
               className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {loading ? "生成中..." : "生成并校正行程"}
+              {loading ? "运行中..." : "启动 Agent Run"}
             </button>
             <button
               type="button"
@@ -241,27 +216,24 @@ export default function Week1Demo() {
           </div>
         </form>
 
+        {runId ? <p className="mt-3 text-xs text-slate-500">runId: {runId}</p> : null}
         {error ? <p className="mt-3 text-sm text-rose-600">{error}</p> : null}
       </section>
 
-      {loading || progressLogs.length > 0 || modelOutputPreview ? (
+      {loading || events.length > 0 ? (
         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h3 className="text-base font-semibold text-slate-900">实时推理过程（结构化）</h3>
-          <div className="mt-3 max-h-56 space-y-2 overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3">
-            {progressLogs.length > 0 ? (
-              progressLogs.map((log, index) => (
-                <p key={`progress-${index}`} className="text-sm text-slate-700">
-                  {log}
+          <h3 className="text-base font-semibold text-slate-900">运行事件流</h3>
+          <div className="mt-3 max-h-72 space-y-2 overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3">
+            {events.length > 0 ? (
+              events.map((item, index) => (
+                <p key={`${item.type}-${index}`} className="text-sm text-slate-700">
+                  {describeEvent(item)}
                 </p>
               ))
             ) : (
-              <p className="text-sm text-slate-500">等待阶段事件...</p>
+              <p className="text-sm text-slate-500">等待事件...</p>
             )}
           </div>
-          <h4 className="mt-4 text-sm font-semibold text-slate-900">模型输出流（原始片段）</h4>
-          <pre className="mt-2 max-h-56 overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-6 text-slate-700">
-            {modelOutputPreview || "等待模型输出..."}
-          </pre>
         </section>
       ) : null}
 
@@ -269,50 +241,35 @@ export default function Week1Demo() {
         <>
           <section className="grid gap-4 md:grid-cols-2">
             <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-base font-semibold text-slate-900">目标澄清结果</h3>
+              <h3 className="text-base font-semibold text-slate-900">澄清意图</h3>
               <div className="mt-3 space-y-1 text-sm text-slate-700">
-                <p>城市：{result.clarified.city}</p>
-                <p>时段：{result.clarified.timeframe}</p>
-                <p>偏好：{result.clarified.vibes.join(" / ")}</p>
-                <p>体力模式：{result.clarified.mobility}</p>
-                <p>预算：{result.clarified.budget}</p>
-                <p>
-                  缺失信息：
-                  {result.clarified.missing.length > 0 ? result.clarified.missing.join(" / ") : "无"}
-                </p>
+                <p>城市：{result.clarifiedIntent.city}</p>
+                <p>时段：{result.clarifiedIntent.timeframe}</p>
+                <p>偏好：{result.clarifiedIntent.vibes.join(" / ")}</p>
+                <p>体力模式：{result.clarifiedIntent.mobility}</p>
+                <p>预算：{result.clarifiedIntent.budget}</p>
               </div>
             </article>
-
             <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-base font-semibold text-slate-900">环境感知（Weather Tool）</h3>
+              <h3 className="text-base font-semibold text-slate-900">记忆上下文</h3>
               <div className="mt-3 space-y-1 text-sm text-slate-700">
-                <p>天气：{result.weather.condition}</p>
-                <p>温度：{result.weather.temperatureC}°C</p>
-                <p>来源：{result.weather.source ?? "unknown"}</p>
-                <p>建议：{result.weather.advice}</p>
+                <p>高权重偏好：{result.memoryApplied.topVibes.length > 0 ? result.memoryApplied.topVibes.join(" / ") : "无"}</p>
+                <p>负反馈地点：{result.memoryApplied.dislikedPlaces.length > 0 ? result.memoryApplied.dislikedPlaces.join(" / ") : "无"}</p>
+                <p>偏好体力：{result.memoryApplied.preferredMobility ?? "无"}</p>
               </div>
             </article>
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-900">用户长期记忆快照</h3>
-            <div className="mt-3 space-y-1 text-sm text-slate-700">
-              <p>userId：{result.userId}</p>
-              <p>高权重偏好：{result.memory.topVibes.length > 0 ? result.memory.topVibes.join(" / ") : "无"}</p>
-              <p>偏好体力模式：{result.memory.preferredMobility ?? "无"}</p>
-              <p>
-                不喜欢地点：
-                {result.memory.dislikedPlaces.length > 0 ? result.memory.dislikedPlaces.join(" / ") : "无"}
-              </p>
-            </div>
+            <h3 className="text-base font-semibold text-slate-900">最终答复</h3>
+            <p className="mt-3 text-sm leading-7 text-slate-700">{result.finalAnswer}</p>
+            <p className="mt-3 text-sm text-slate-600">{result.traceSummary}</p>
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-900">重规划后计划（最终）</h3>
-            <p className="mt-2 text-sm text-slate-600">{result.summary}</p>
-            <p className="mt-1 text-sm text-slate-600">初始规划来源：{result.plannerSource}</p>
+            <h3 className="text-base font-semibold text-slate-900">最终计划</h3>
             <div className="mt-4 space-y-3">
-              {result.plan.map((step) => (
+              {result.finalPlan.map((step) => (
                 <article key={step.id} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <p className="text-sm font-semibold text-slate-900">
@@ -324,6 +281,7 @@ export default function Week1Demo() {
                   </div>
                   <p className="mt-1 text-sm text-slate-700">动作：{step.action}</p>
                   <p className="mt-1 text-sm text-slate-600">原因：{step.reason}</p>
+                  <p className="mt-1 text-xs text-slate-500">tools: {(step.requiresTools ?? []).join(" / ") || "none"}</p>
                 </article>
               ))}
             </div>
@@ -331,28 +289,23 @@ export default function Week1Demo() {
 
           <section className="grid gap-4 md:grid-cols-2">
             <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-base font-semibold text-slate-900">初始计划快照</h3>
+              <h3 className="text-base font-semibold text-slate-900">工具调用记录</h3>
               <div className="mt-3 space-y-2">
-                {result.initialPlan.map((step) => (
-                  <p key={`initial-${step.id}`} className="text-sm text-slate-700">
-                    {step.id} · {step.time} · {step.place}
+                {result.toolCalls.map((item) => (
+                  <p key={item.toolCallId} className="text-sm text-slate-700">
+                    {item.toolName} · {item.success ? "success" : "failed"} · {item.durationMs}ms
                   </p>
                 ))}
               </div>
             </article>
-
             <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <h3 className="text-base font-semibold text-slate-900">自我修正记录</h3>
+              <h3 className="text-base font-semibold text-slate-900">自我修正</h3>
               <div className="mt-3 space-y-2">
-                {result.corrections.length > 0 ? (
-                  result.corrections.map((item) => (
-                    <p key={`correction-${item.stepId}`} className="text-sm text-slate-700">
-                      {item.stepId}: 策略 {item.strategyId} · 动作 {item.action}
+                {result.replans.length > 0 ? (
+                  result.replans.map((item) => (
+                    <p key={`${item.stepId}-${item.reason}`} className="text-sm text-slate-700">
+                      {item.stepId} · {item.note}
                       {item.oldPlace && item.newPlace ? ` · ${item.oldPlace} -> ${item.newPlace}` : ""}
-                      {typeof item.oldDurationMinutes === "number" && typeof item.newDurationMinutes === "number"
-                        ? ` · ${item.oldDurationMinutes}min -> ${item.newDurationMinutes}min`
-                        : ""}
-                      {`（${item.reason}）`}
                     </p>
                   ))
                 ) : (
@@ -363,24 +316,20 @@ export default function Week1Demo() {
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-900">POI 工具检查结果</h3>
-            <div className="mt-3 space-y-2">
-              {result.poiChecks.map((check) => (
-                <article key={`poi-${check.stepId}`} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                  <p className="font-medium text-slate-800">
-                    {check.stepId} · {check.place} · {check.available ? "可用" : "不可用"}
-                  </p>
-                  <p className="text-slate-600">
-                    reason: {check.reason} · source: {check.source} · provider: {check.provider ?? "unknown"}
-                  </p>
-                  {check.displayName ? <p className="text-slate-500">poi: {check.displayName}</p> : null}
-                </article>
-              ))}
+            <h3 className="text-base font-semibold text-slate-900">评测预埋结果</h3>
+            <div className="mt-3 space-y-1 text-sm text-slate-700">
+              <p>completionStatus：{result.evaluationArtifacts.completionStatus}</p>
+              <p>toolSuccessRate：{result.evaluationArtifacts.toolSuccessRate.toFixed(2)}</p>
+              <p>latencyMs：{result.evaluationArtifacts.latencyMs}</p>
+              <p>replanCount：{result.evaluationArtifacts.replanCount}</p>
             </div>
+            <pre className="mt-3 max-h-56 overflow-auto rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs leading-6 text-slate-700">
+              {result.evaluationArtifacts.judgeReadyTranscript}
+            </pre>
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-900">写入反馈（Week 3 记忆更新）</h3>
+            <h3 className="text-base font-semibold text-slate-900">写入反馈</h3>
             <form className="mt-3 grid gap-3 md:grid-cols-2" onSubmit={handleFeedbackSubmit}>
               <label className="flex flex-col gap-1 text-sm text-slate-700">
                 喜欢的 vibe（逗号分隔）
@@ -428,7 +377,7 @@ export default function Week1Demo() {
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-900">动态地图标注（高德 JS）</h3>
+            <h3 className="text-base font-semibold text-slate-900">动态地图标注</h3>
             {result.mapPoints.length > 0 ? (
               <AmapDynamicMap points={result.mapPoints} />
             ) : (
@@ -437,16 +386,14 @@ export default function Week1Demo() {
           </section>
 
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-900">最终地点地图标注（高德静态地图）</h3>
+            <h3 className="text-base font-semibold text-slate-900">静态地图标注</h3>
             {result.mapPoints.length > 0 ? (
               <>
                 <Image
                   className="mt-3 w-full rounded-xl border border-slate-200"
                   alt="final map markers"
                   src={`/api/map/static?points=${encodeURIComponent(
-                    result.mapPoints
-                      .map((point) => `${point.order},${point.longitude},${point.latitude}`)
-                      .join(";"),
+                    result.mapPoints.map((point) => `${point.order},${point.longitude},${point.latitude}`).join(";"),
                   )}`}
                   width={960}
                   height={520}
@@ -464,20 +411,6 @@ export default function Week1Demo() {
             ) : (
               <p className="mt-3 text-sm text-slate-600">本次未获取到可用于地图标注的经纬度。</p>
             )}
-          </section>
-
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-900">状态流转（含 Replan）</h3>
-            <div className="mt-3 grid gap-2">
-              {result.timeline.map((event, index) => (
-                <article key={`${event.stage}-${index}`} className="rounded-lg border border-slate-200 px-3 py-2 text-sm">
-                  <p className="font-medium text-slate-800">
-                    {index + 1}. {event.stage}
-                  </p>
-                  <p className="text-slate-600">{event.detail}</p>
-                </article>
-              ))}
-            </div>
           </section>
         </>
       ) : null}
