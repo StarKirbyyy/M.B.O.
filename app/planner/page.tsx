@@ -1,18 +1,6 @@
-"use client";
-
-import { useRouter } from "next/navigation";
-
-import { useAuth } from "@/app/components/auth-provider";
-import Week1Demo from "@/app/components/week1-demo";
+import CityAgentConsole from "@/app/components/city-agent-console";
 
 export default function PlannerPage() {
-  const router = useRouter();
-  const { authToken, currentUser, booting, authError } = useAuth();
-
-  if (booting) {
-    return <main className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8">初始化中...</main>;
-  }
-
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8">
       <section className="mbo-hero mbo-panel rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -29,16 +17,9 @@ export default function PlannerPage() {
           <span className="mbo-chip">REPLAN TRACK</span>
           <span className="mbo-chip">MAP LINK</span>
         </div>
-        {authError ? <p className="mt-2 text-sm text-rose-600">{authError}</p> : null}
       </section>
 
-      <Week1Demo
-        authToken={authToken}
-        currentUserId={currentUser?.id ?? null}
-        onRequireAuth={() => {
-          router.push("/auth/login?next=/planner");
-        }}
-      />
+      <CityAgentConsole />
     </main>
   );
 }

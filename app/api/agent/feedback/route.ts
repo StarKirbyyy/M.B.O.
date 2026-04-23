@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   try {
     const payload = readAuthPayload(request);
     const body = (await request.json()) as FeedbackRequestBody;
-    const userId = payload?.sub ?? body.userId?.trim() ?? "demo-user";
+    const userId = payload?.sub ?? body.userId?.trim() ?? "local-user";
     const likedVibes = normalizeArray(body.likedVibes);
     const dislikedVibes = normalizeArray(body.dislikedVibes);
     const dislikedPlaces = normalizeArray(body.dislikedPlaces);

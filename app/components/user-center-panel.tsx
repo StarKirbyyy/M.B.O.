@@ -152,7 +152,13 @@ export default function UserCenterPanel({ authToken, onRequireAuth }: UserCenter
   }, [authToken, onRequireAuth]);
 
   useEffect(() => {
-    void loadAll();
+    const timeoutId = window.setTimeout(() => {
+      void loadAll();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [loadAll]);
 
   async function handleUpdateProfile(event: React.FormEvent<HTMLFormElement>) {
