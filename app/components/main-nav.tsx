@@ -41,6 +41,10 @@ export default function MainNav() {
     };
   }, []);
 
+  if (pathname === "/") {
+    return null;
+  }
+
   return (
     <header className="mbo-nav-shell sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3 md:px-8">
