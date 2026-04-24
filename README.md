@@ -23,7 +23,7 @@ AGENT_OFFLINE_ONLY=false
 - If AMap request fails, POI lookup falls back to OSM, then to mock fallback.
 - If SiliconFlow variables are missing or model call fails, planner falls back to rule-based planning.
 - `NEXT_PUBLIC_AMAP_JS_KEY` is used for interactive dynamic map rendering on frontend.
-- `AGENT_OFFLINE_ONLY=true` forces offline-safe mode (no live weather/POI/model calls), useful for demo stability.
+- `AGENT_OFFLINE_ONLY=true` forces offline-safe mode (no live weather/POI/model calls), useful for deterministic local runs.
 
 ### Streaming Progress API
 
@@ -37,7 +37,7 @@ AGENT_OFFLINE_ONLY=false
 
 - `POST /api/agent/feedback`: writes long-term user preference memory.
   - request body example:
-    - `userId`: `"demo-user"`
+    - `userId`: `"local-user"`
     - `likedVibes`: `["art"]`
     - `dislikedPlaces`: `["武康路街区"]`
     - `preferredMobility`: `"low"`

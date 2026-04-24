@@ -77,7 +77,7 @@ async function writeStore(store: MemoryStore): Promise<void> {
 }
 
 export async function readUserMemory(userId: string): Promise<UserMemory> {
-  const normalized = userId.trim() || "demo-user";
+  const normalized = userId.trim() || "local-user";
   const store = await readStore();
   return store.users[normalized] ?? defaultMemory(normalized);
 }
@@ -91,7 +91,7 @@ export function getTopVibes(memory: UserMemory, limit = 2): string[] {
 }
 
 export async function writeUserFeedback(userId: string, feedback: MemoryFeedbackInput): Promise<UserMemory> {
-  const normalized = userId.trim() || "demo-user";
+  const normalized = userId.trim() || "local-user";
   const store = await readStore();
   const current = store.users[normalized] ?? defaultMemory(normalized);
 
@@ -132,7 +132,7 @@ export async function writeUserFeedback(userId: string, feedback: MemoryFeedback
 }
 
 export async function clearUserMemory(userId: string): Promise<boolean> {
-  const normalized = userId.trim() || "demo-user";
+  const normalized = userId.trim() || "local-user";
   const store = await readStore();
   if (!store.users[normalized]) {
     return false;

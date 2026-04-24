@@ -1,4 +1,4 @@
-import { runWeek1Agent, type AgentProgressEvent } from "@/lib/agent/run-week1";
+import { runAgent } from "@/lib/agent/runtime/run-agent";
 import { readAuthPayload } from "@/lib/auth/request";
 import { createPlanHistory } from "@/lib/user/repository";
 
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const payload = readAuthPayload(request);
     const body = (await request.json()) as PlanRequestBody;
     const input = body.input?.trim();
-    const userId = payload?.sub ?? body.userId?.trim() ?? "demo-user";
+    const userId = payload?.sub ?? body.userId?.trim() ?? "local-user";
 
     if (!input) {
       return Response.json(
@@ -33,71 +33,26 @@ export async function POST(request: Request) {
     const stream = new TransformStream();
     const writer = stream.writable.getWriter();
     const encoder = new TextEncoder();
-    let completed = false;
-    let streamClosed = false;
+    let closed = false;
 
-    let writeQueue: Promise<void> = Promise.resolve();
-    const push = (event: string, data: unknown) => {
-      if (streamClosed) {
-        return writeQueue;
+    const push = async (event: string, data: unknown) => {
+      if (closed) {
+        return;
       }
 
-      writeQueue = writeQueue
-        .then(async () => {
-          if (streamClosed) {
-            return;
-          }
-
-          await writer.write(encoder.encode(formatSse(event, data)));
-        })
-        .catch(() => {
-          // Client disconnect / aborted response should stop the stream silently.
-          streamClosed = true;
-        });
-      return writeQueue;
+      await writer.write(encoder.encode(formatSse(event, data)));
     };
 
-    request.signal.addEventListener("abort", () => {
-      streamClosed = true;
-    });
-
     void (async () => {
-      const heartbeat = setInterval(() => {
-        if (!completed) {
-          void push("heartbeat", {
-            detail: "模型处理中，请稍候...",
-          });
-        }
-      }, 2000);
-
       try {
-        await push("stage", {
-          stage: "INPUT",
-          detail: "开始流式生成。",
-        });
-
-        const result = await runWeek1Agent(input, {
+        const result = await runAgent(input, {
           userId,
-          onProgress: (event: AgentProgressEvent) => {
-            if (streamClosed) {
-              return;
-            }
-
-            if (event.type === "stage") {
-              void push("stage", event);
-            }
-
-            if (event.type === "model_chunk") {
-              void push("model_chunk", event);
-            }
-
-            if (event.type === "final") {
-              completed = true;
-              void push("final", event);
-            }
+          onEvent(event) {
+            void push(event.type, event);
           },
         });
-        if (payload && !streamClosed) {
+
+        if (payload) {
           try {
             await createPlanHistory({
               userId: payload.sub,
@@ -111,19 +66,16 @@ export async function POST(request: Request) {
           }
         }
       } catch (error) {
-        const message = error instanceof Error ? error.message : "unknown error";
-        if (!streamClosed) {
-          await push("error", { message });
-        }
+        await push("run_failed", {
+          message: error instanceof Error ? error.message : "unknown error",
+        });
       } finally {
-        clearInterval(heartbeat);
-        await writeQueue;
-
-        if (!streamClosed) {
+        if (!closed) {
+          closed = true;
           try {
             await writer.close();
           } catch {
-            // Ignore close errors when stream has already been aborted by client.
+            // ignore close errors
           }
         }
       }
