@@ -4,6 +4,7 @@ import { IBM_Plex_Mono, Noto_Sans_SC, Rajdhani } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/app/components/auth-provider";
 import MainNav from "@/app/components/main-nav";
+import RouteShellGate from "@/app/components/route-shell-gate";
 
 const fontBody = Noto_Sans_SC({
   subsets: ["latin"],
@@ -41,7 +42,7 @@ export default function RootLayout({
       <body className="mbo-industrial min-h-full flex flex-col">
         <AuthProvider>
           <MainNav />
-          <div className="mbo-shell">{children}</div>
+          <RouteShellGate>{children}</RouteShellGate>
         </AuthProvider>
       </body>
     </html>

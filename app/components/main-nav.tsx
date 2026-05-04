@@ -41,7 +41,15 @@ export default function MainNav() {
     };
   }, []);
 
-  if (pathname === "/") {
+  if (
+    pathname === "/" ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/planner") ||
+    pathname.startsWith("/history") ||
+    pathname.startsWith("/user") ||
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/notice")
+  ) {
     return null;
   }
 

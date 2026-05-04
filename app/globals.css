@@ -9,8 +9,8 @@
   --mbo-line-strong: #506071;
   --mbo-text: #d7e0e7;
   --mbo-muted: #90a0ad;
-  --mbo-accent: #f4ba4f;
-  --mbo-accent-strong: #ffcb69;
+  --mbo-accent: #38bdf8;
+  --mbo-accent-strong: #7dd3fc;
   --mbo-danger: #d96a68;
   --background: var(--mbo-bg);
   --foreground: var(--mbo-text);
@@ -28,6 +28,10 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   letter-spacing: 0.01em;
+}
+
+body.mbo-shell-lock-scroll {
+  overflow: hidden;
 }
 
 @keyframes mbo-grid-drift {
@@ -107,7 +111,7 @@ body {
 .mbo-industrial {
   position: relative;
   background:
-    radial-gradient(1200px 420px at 50% -10%, rgb(255 201 105 / 10%), transparent 65%),
+    radial-gradient(1200px 420px at 50% -10%, rgb(125 211 252 / 12%), transparent 65%),
     linear-gradient(180deg, #0b1116 0%, #0c1218 50%, #0a1015 100%);
 }
 
@@ -183,7 +187,7 @@ input:focus,
 textarea:focus,
 select:focus {
   border-color: var(--mbo-accent) !important;
-  box-shadow: 0 0 0 2px rgb(244 186 79 / 18%) !important;
+  box-shadow: 0 0 0 2px rgb(56 189 248 / 18%) !important;
 }
 
 button {
@@ -272,21 +276,21 @@ button:hover::after {
 }
 
 .bg-sky-100 {
-  background-color: rgb(244 186 79 / 16%) !important;
+  background-color: rgb(56 189 248 / 16%) !important;
 }
 
 .bg-amber-50 {
-  background-color: rgb(244 186 79 / 12%) !important;
+  background-color: rgb(56 189 248 / 12%) !important;
 }
 
 .border-sky-200,
 .border-sky-300,
 .border-sky-400 {
-  border-color: rgb(244 186 79 / 42%) !important;
+  border-color: rgb(56 189 248 / 42%) !important;
 }
 
 .border-amber-200 {
-  border-color: rgb(244 186 79 / 45%) !important;
+  border-color: rgb(56 189 248 / 45%) !important;
 }
 
 .text-sky-800,
@@ -365,8 +369,8 @@ button:hover::after {
   top: -1px;
   width: 68px;
   height: 68px;
-  border-top: 1px solid rgb(255 201 105 / 60%);
-  border-right: 1px solid rgb(255 201 105 / 60%);
+  border-top: 1px solid rgb(125 211 252 / 62%);
+  border-right: 1px solid rgb(125 211 252 / 62%);
   opacity: 0.65;
   animation: mbo-glow-pulse 3.4s ease-in-out infinite;
 }
@@ -375,8 +379,8 @@ button:hover::after {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  border: 1px solid rgb(244 186 79 / 45%);
-  background: rgb(244 186 79 / 10%);
+  border: 1px solid rgb(56 189 248 / 45%);
+  background: rgb(56 189 248 / 10%);
   color: var(--mbo-accent-strong);
   font-size: 0.72rem;
   line-height: 1;
@@ -404,7 +408,7 @@ button:hover::after {
   height: 0.36rem;
   border-radius: 999px;
   background: var(--mbo-accent);
-  box-shadow: 0 0 10px rgb(244 186 79 / 65%);
+  box-shadow: 0 0 10px rgb(56 189 248 / 65%);
   animation: mbo-flicker 1.6s linear infinite;
 }
 
@@ -433,7 +437,7 @@ button:hover::after {
   height: 78px;
   right: -36px;
   top: -36px;
-  border: 1px solid rgb(244 186 79 / 45%);
+  border: 1px solid rgb(56 189 248 / 45%);
   border-radius: 50%;
   pointer-events: none;
   animation: mbo-ring-rotate 8s linear infinite;
@@ -462,13 +466,13 @@ button:hover::after {
 .mbo-divider {
   width: 100%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgb(244 186 79 / 50%), transparent);
+  background: linear-gradient(90deg, transparent, rgb(56 189 248 / 50%), transparent);
 }
 
 .mbo-link-inline {
   color: var(--mbo-accent-strong);
   text-decoration: underline;
-  text-decoration-color: rgb(244 186 79 / 55%);
+  text-decoration-color: rgb(56 189 248 / 55%);
   text-underline-offset: 3px;
 }
 
@@ -479,19 +483,19 @@ button:hover::after {
 }
 
 .mbo-nav-link:hover {
-  border-color: rgb(244 186 79 / 58%) !important;
+  border-color: rgb(56 189 248 / 58%) !important;
 }
 
 .mbo-nav-link-active {
-  box-shadow: 0 0 0 1px rgb(244 186 79 / 35%), 0 8px 20px rgb(0 0 0 / 28%);
+  box-shadow: 0 0 0 1px rgb(56 189 248 / 35%), 0 8px 20px rgb(0 0 0 / 28%);
 }
 
 .mbo-btn-cta {
-  box-shadow: 0 0 0 1px rgb(244 186 79 / 35%), inset 0 -10px 20px rgb(0 0 0 / 16%);
+  box-shadow: 0 0 0 1px rgb(56 189 248 / 35%), inset 0 -10px 20px rgb(0 0 0 / 16%);
 }
 
 .mbo-avatar-btn {
-  box-shadow: 0 0 0 1px rgb(244 186 79 / 35%), inset 0 -8px 16px rgb(0 0 0 / 16%);
+  box-shadow: 0 0 0 1px rgb(56 189 248 / 35%), inset 0 -8px 16px rgb(0 0 0 / 16%);
 }
 
 .mbo-dropdown {
@@ -510,7 +514,7 @@ button:hover::after {
   right: 0;
   bottom: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgb(244 186 79 / 60%), transparent);
+  background: linear-gradient(90deg, transparent, rgb(56 189 248 / 60%), transparent);
 }
 
 .mbo-nav-status {
@@ -546,7 +550,7 @@ button:hover::after {
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgb(244 186 79 / 36%);
+  background: rgb(56 189 248 / 36%);
   border: 1px solid rgb(255 255 255 / 10%);
 }
 
@@ -642,8 +646,8 @@ button:hover::after {
   right: 0;
   top: 0;
   display: block;
-  background: #ecef14;
-  box-shadow: 0 0 20px rgb(236 239 20 / 55%);
+  background: #38bdf8;
+  box-shadow: 0 0 20px rgb(56 189 248 / 55%);
   transition: opacity 380ms ease;
 }
 
@@ -651,7 +655,7 @@ button:hover::after {
   position: absolute;
   left: 1.6rem;
   margin: 0;
-  color: #ecef14;
+  color: #38bdf8;
   font-family: var(--font-display), var(--font-sans);
   font-size: clamp(2rem, 4vw, 3rem);
   line-height: 0.95;
@@ -671,7 +675,7 @@ button:hover::after {
 
 .mbo-loading-screen.is-expand .mbo-loading-rail {
   width: 100vw;
-  background: linear-gradient(90deg, #ecef14 0%, #dbe665 40%, #92b16d 100%);
+  background: linear-gradient(90deg, #38bdf8 0%, #7dd3fc 40%, #bae6fd 100%);
 }
 
 .mbo-loading-screen.is-expand .mbo-loading-rail-fill {
@@ -718,6 +722,10 @@ button:hover::after {
   --mbo-home-side-w: 300px;
 }
 
+.mbo-home-shell.is-pinned-open {
+  --mbo-home-side-w: 300px;
+}
+
 .mbo-home-sidebar {
   position: absolute;
   left: 0;
@@ -744,6 +752,13 @@ button:hover::after {
 
 .mbo-home-sidebar:hover,
 .mbo-home-sidebar:focus-within {
+  background:
+    linear-gradient(180deg, rgb(251 252 253 / 98%), rgb(241 243 246 / 97%)),
+    linear-gradient(90deg, rgb(0 0 0 / 3%), transparent 58%);
+  box-shadow: 14px 0 24px rgb(15 23 42 / 9%);
+}
+
+.mbo-home-shell.is-pinned-open .mbo-home-sidebar {
   background:
     linear-gradient(180deg, rgb(251 252 253 / 98%), rgb(241 243 246 / 97%)),
     linear-gradient(90deg, rgb(0 0 0 / 3%), transparent 58%);
@@ -798,6 +813,7 @@ button:hover::after {
   display: block;
   border: 0;
   background: transparent;
+  text-decoration: none;
   color: #c7ccd2;
   font-size: 1rem;
   text-align: left;
@@ -1044,13 +1060,33 @@ button:hover::after {
   transform: translate(0, -50%);
 }
 
+.mbo-home-shell.is-pinned-open .mbo-home-logo-sub,
+.mbo-home-shell.is-pinned-open .mbo-home-menu-label {
+  opacity: 1;
+  max-height: 80px;
+  max-width: 208px;
+  transform: translate(0, -50%);
+}
+
 .mbo-home-sidebar:hover .mbo-home-user-btn,
 .mbo-home-sidebar:focus-within .mbo-home-user-btn {
   pointer-events: auto;
 }
 
+.mbo-home-shell.is-pinned-open .mbo-home-user-btn {
+  pointer-events: auto;
+}
+
 .mbo-home-sidebar:hover .mbo-home-userbox,
 .mbo-home-sidebar:focus-within .mbo-home-userbox {
+  width: calc(100% - var(--mbo-home-user-left) - var(--mbo-home-user-right));
+  align-self: flex-start;
+  border-radius: 4px;
+  background: #d6d9de;
+  padding: 4px;
+}
+
+.mbo-home-shell.is-pinned-open .mbo-home-userbox {
   width: calc(100% - var(--mbo-home-user-left) - var(--mbo-home-user-right));
   align-self: flex-start;
   border-radius: 4px;
@@ -1065,13 +1101,27 @@ button:hover::after {
   transform: translate(0, -50%);
 }
 
+.mbo-home-shell.is-pinned-open .mbo-home-user-row-label {
+  opacity: 1;
+  max-width: 204px;
+  transform: translate(0, -50%);
+}
+
 .mbo-home-sidebar:hover .mbo-home-social-row,
 .mbo-home-sidebar:focus-within .mbo-home-social-row {
   opacity: 0.88;
 }
 
+.mbo-home-shell.is-pinned-open .mbo-home-social-row {
+  opacity: 0.88;
+}
+
 .mbo-home-sidebar:hover .mbo-home-footer-mark span,
 .mbo-home-sidebar:focus-within .mbo-home-footer-mark span {
+  opacity: 1;
+}
+
+.mbo-home-shell.is-pinned-open .mbo-home-footer-mark span {
   opacity: 1;
 }
 
@@ -1085,6 +1135,12 @@ button:hover::after {
     linear-gradient(180deg, rgb(255 255 255 / 18%), rgb(255 255 255 / 8%)),
     #e5e7eb;
   transition: margin-left 360ms ease;
+}
+
+.mbo-home-main-stage-embedded {
+  position: relative;
+  min-height: calc(100dvh - 5.6rem);
+  padding: 0.2rem 0.2rem 1rem;
 }
 
 .mbo-home-hero-bg {
@@ -1128,6 +1184,11 @@ button:hover::after {
   background: rgb(255 255 255 / 74%);
   backdrop-filter: blur(2px);
   padding: 1.2rem 1.2rem 1.3rem;
+}
+
+.mbo-home-main-stage-embedded .mbo-home-hero-content {
+  width: min(820px, 100%);
+  margin-top: 0.3rem;
 }
 
 .mbo-home-tag {
@@ -1199,6 +1260,14 @@ button:hover::after {
   gap: 0.76rem;
 }
 
+.mbo-home-bottom-panel.is-embedded {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  margin-top: 1rem;
+}
+
 .mbo-home-bottom-card {
   border: 1px solid rgb(15 23 42 / 18%);
   background: rgb(255 255 255 / 86%);
@@ -1207,7 +1276,7 @@ button:hover::after {
 
 .mbo-home-bottom-card p {
   margin: 0;
-  color: #84cc16;
+  color: #38bdf8;
   font-family: var(--font-display), var(--font-sans);
   font-size: 0.98rem;
 }
@@ -1223,6 +1292,221 @@ button:hover::after {
   margin-top: 0.38rem;
   color: #475569;
   font-size: 0.82rem;
+}
+
+.mbo-home-main-routed {
+  overflow: hidden;
+}
+
+.mbo-home-route-stack {
+  position: relative;
+  --mbo-route-duration: 520ms;
+  height: calc(100dvh - 2.8rem);
+  overflow: hidden;
+}
+
+.mbo-home-route-stack.is-route-switching .mbo-home-routed-content {
+  position: absolute;
+  inset: 0;
+}
+
+.mbo-route-snapshot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.mbo-route-current.is-layered {
+  z-index: 3;
+}
+
+@keyframes mbo-route-slide-up-in {
+  0% {
+    transform: translateY(100%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes mbo-route-slide-down-in {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes mbo-route-slide-up-out {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes mbo-route-slide-down-out {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+.mbo-home-routed-content {
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgb(15 23 42 / 14%);
+  background: rgb(255 255 255 / 74%);
+  backdrop-filter: blur(2px);
+  padding: 1rem;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  color: #1e293b;
+  will-change: transform;
+}
+
+.mbo-home-routed-content.mbo-route-enter-up {
+  animation: mbo-route-slide-up-in var(--mbo-route-duration) linear both;
+}
+
+.mbo-home-routed-content.mbo-route-enter-down {
+  animation: mbo-route-slide-down-in var(--mbo-route-duration) linear both;
+}
+
+.mbo-home-routed-content.mbo-route-leave-up {
+  animation: mbo-route-slide-up-out var(--mbo-route-duration) linear both;
+}
+
+.mbo-home-routed-content.mbo-route-leave-down {
+  animation: mbo-route-slide-down-out var(--mbo-route-duration) linear both;
+}
+
+.mbo-home-routed-content .mbo-hero,
+.mbo-home-routed-content .mbo-panel,
+.mbo-home-routed-content .mbo-terminal {
+  background:
+    linear-gradient(160deg, rgb(255 255 255 / 76%) 0%, rgb(248 250 252 / 86%) 100%),
+    #fff !important;
+  border-color: rgb(15 23 42 / 16%) !important;
+}
+
+.mbo-home-routed-content .mbo-kicker {
+  background: rgb(15 23 42 / 6%);
+  border-color: rgb(15 23 42 / 24%);
+  color: #1e293b;
+}
+
+.mbo-home-routed-content .mbo-chip {
+  background: rgb(255 255 255 / 78%);
+  border-color: rgb(15 23 42 / 18%);
+  color: #334155;
+}
+
+.mbo-home-routed-content .mbo-chip-dot {
+  background: #38bdf8;
+  box-shadow: 0 0 8px rgb(56 189 248 / 45%);
+}
+
+.mbo-home-routed-content .bg-white,
+.mbo-home-routed-content .bg-white\/90 {
+  background-color: rgb(255 255 255 / 92%) !important;
+}
+
+.mbo-home-routed-content .bg-slate-50 {
+  background-color: rgb(248 250 252 / 92%) !important;
+}
+
+.mbo-home-routed-content .bg-slate-900 {
+  background:
+    linear-gradient(150deg, rgb(241 245 249 / 92%) 0%, rgb(226 232 240 / 94%) 100%),
+    #e2e8f0 !important;
+}
+
+.mbo-home-routed-content .text-slate-900,
+.mbo-home-routed-content .text-slate-800,
+.mbo-home-routed-content .text-slate-700,
+.mbo-home-routed-content .text-slate-100 {
+  color: #0f172a !important;
+}
+
+.mbo-home-routed-content .text-slate-600,
+.mbo-home-routed-content .text-slate-500 {
+  color: #475569 !important;
+}
+
+.mbo-home-routed-content .border-slate-200,
+.mbo-home-routed-content .border-slate-300 {
+  border-color: rgb(15 23 42 / 16%) !important;
+}
+
+.mbo-home-routed-content .border-sky-200,
+.mbo-home-routed-content .border-sky-300,
+.mbo-home-routed-content .border-sky-400 {
+  border-color: rgb(15 23 42 / 24%) !important;
+}
+
+.mbo-home-routed-content .rounded-2xl,
+.mbo-home-routed-content .rounded-xl,
+.mbo-home-routed-content .rounded-lg,
+.mbo-home-routed-content .rounded-md {
+  border-radius: 4px !important;
+}
+
+.mbo-home-routed-content .shadow-sm,
+.mbo-home-routed-content .shadow-lg {
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 22%), 0 10px 22px rgb(15 23 42 / 10%) !important;
+}
+
+.mbo-home-routed-content input,
+.mbo-home-routed-content textarea,
+.mbo-home-routed-content select {
+  background: rgb(255 255 255 / 88%) !important;
+  color: #0f172a !important;
+  border-color: rgb(15 23 42 / 24%) !important;
+}
+
+.mbo-home-routed-content .text-rose-700,
+.mbo-home-routed-content .text-rose-600 {
+  color: #be123c !important;
+}
+
+.mbo-home-routed-content .text-emerald-700 {
+  color: #166534 !important;
+}
+
+.mbo-home-routed-content .hover\:bg-slate-50:hover {
+  background-color: rgb(226 232 240 / 56%) !important;
+}
+
+.mbo-home-routed-content .mbo-route-force-light > section,
+.mbo-home-routed-content .mbo-route-force-light article {
+  background:
+    linear-gradient(160deg, rgb(255 255 255 / 86%) 0%, rgb(248 250 252 / 92%) 100%),
+    #fff !important;
+  border-color: rgb(15 23 42 / 16%) !important;
+}
+
+.mbo-home-routed-content .mbo-route-force-light h2,
+.mbo-home-routed-content .mbo-route-force-light h3,
+.mbo-home-routed-content .mbo-route-force-light p,
+.mbo-home-routed-content .mbo-route-force-light label {
+  color: #0f172a !important;
+}
+
+.mbo-home-routed-content .mbo-route-force-light button {
+  color: #0f172a;
+}
+
+.mbo-home-routed-content .mbo-route-force-light .bg-sky-600,
+.mbo-home-routed-content .mbo-route-force-light .bg-emerald-600 {
+  background-color: #0f172a !important;
+  color: #fff !important;
 }
 
 @media (max-width: 1024px) {
@@ -1360,6 +1644,11 @@ button:hover::after {
     position: static;
     margin-top: 1rem;
     grid-template-columns: 1fr;
+  }
+
+  .mbo-home-routed-content {
+    min-height: auto;
+    padding: 0.72rem;
   }
 
   .mbo-loading-core {

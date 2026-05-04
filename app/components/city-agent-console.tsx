@@ -170,7 +170,7 @@ export default function CityAgentConsole() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 md:px-8">
+    <div className="mbo-route-force-light mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-8 md:px-8">
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">City Agent Runtime</h2>
         <p className="mt-2 text-sm text-slate-600">

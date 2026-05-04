@@ -15,5 +15,5 @@ export default async function AuthLoginPage({ searchParams }: AuthLoginPageProps
   const params = await searchParams;
   const nextPath = normalizeNext(params.next);
 
-  return <AuthPageClient mode="login" nextPath={nextPath} />;
+  return <AuthPageClient mode="login" nextPath={nextPath} layoutMode="embedded" />;
 }

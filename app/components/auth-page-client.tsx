@@ -9,18 +9,24 @@ import { useAuth } from "@/app/components/auth-provider";
 interface AuthPageClientProps {
   mode: "login" | "register";
   nextPath: string;
+  layoutMode?: "standalone" | "embedded";
 }
 
-export default function AuthPageClient({ mode, nextPath }: AuthPageClientProps) {
+export default function AuthPageClient({ mode, nextPath, layoutMode = "standalone" }: AuthPageClientProps) {
   const router = useRouter();
   const { authToken, currentUser, booting, authError, applyAuth, logout, refreshMe } = useAuth();
+  const isEmbedded = layoutMode === "embedded";
+  const ContainerTag = isEmbedded ? "section" : "main";
+  const containerClassName = isEmbedded
+    ? "mx-auto w-full max-w-6xl px-0 py-0"
+    : "mx-auto w-full max-w-6xl px-4 py-6 md:px-8";
 
   if (booting) {
-    return <main className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8">初始化中...</main>;
+    return <ContainerTag className={containerClassName}>初始化中...</ContainerTag>;
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8">
+    <ContainerTag className={containerClassName}>
       <section className="mbo-hero mbo-panel mb-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <p className="mbo-kicker">Authentication</p>
         <h1 className="text-2xl font-semibold text-slate-900">{mode === "login" ? "登录" : "注册"}</h1>
@@ -80,6 +86,6 @@ export default function AuthPageClient({ mode, nextPath }: AuthPageClientProps) 
           </div>
         </aside>
       </section>
-    </main>
+    </ContainerTag>
   );
 }

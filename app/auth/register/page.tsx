@@ -15,5 +15,5 @@ export default async function AuthRegisterPage({ searchParams }: AuthRegisterPag
   const params = await searchParams;
   const nextPath = normalizeNext(params.next);
 
-  return <AuthPageClient mode="register" nextPath={nextPath} />;
+  return <AuthPageClient mode="register" nextPath={nextPath} layoutMode="embedded" />;
 }
